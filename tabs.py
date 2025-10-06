@@ -7,9 +7,9 @@ import subprocess
 import time
 from pathlib import Path
 
-SESSION_FILE = Path.home() / ".miniplexer_session.json"
-WM_CLASS = "miniplexer_tab"
-LOG_FILE = Path.home() / ".miniplexer.log"
+SESSION_FILE = Path.home() / ".tabplexer_session.json"
+WM_CLASS = "tabplexer_tab"
+LOG_FILE = Path.home() / ".tabplexer.log"
 
 
 def _empty_session():

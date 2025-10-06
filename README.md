@@ -1,4 +1,4 @@
-# Miniplexer
+# Tabplexer
 
 A lightweight tab management system for terminal emulators like Alacritty that don't support native tabs. It uses `xdotool` to manage multiple terminal windows and presents them as a single, tabbed interface.
 
@@ -37,9 +37,9 @@ This project consists of a single script:
 ## Setup
 
 1.  **Place the script:**
-    Place the `tabs.py` script in a known location, for example `~/scripts/miniplexer/tabs.py`. Make sure it is executable:
+    Place the `tabs.py` script in a known location, for example `~/scripts/tabplexer/tabs.py`. Make sure it is executable:
     ```bash
-    chmod +x ~/scripts/miniplexer/tabs.py
+    chmod +x ~/scripts/tabplexer/tabs.py
     ```
 
 2.  **Configure Alacritty:**
@@ -49,17 +49,17 @@ This project consists of a single script:
     [[keyboard.bindings]]
     key = "T"
     mods = "Control|Shift"
-    command = { program = "/home/tjohnson/scripts/miniplexer/tabs.py", args = ["new"] }
+    command = { program = "~/scripts/tabplexer/tabs.py", args = ["new"] }
 
     [[keyboard.bindings]]
     key = "Right"
     mods = "Control|Shift"
-    command = { program = "/home/tjohnson/scripts/miniplexer/tabs.py", args = ["next"] }
+    command = { program = "~/scripts/tabplexer/tabs.py", args = ["next"] }
 
     [[keyboard.bindings]]
     key = "Left"
     mods = "Control|Shift"
-    command = { program = "/home/tjohnson/scripts/miniplexer/tabs.py", args = ["prev"] }
+    command = { program = "~/scripts/tabplexer/tabs.py", args = ["prev"] }
     ```
 
 3.  **Configure Your Shell Prompt (Optional):**
@@ -67,41 +67,41 @@ This project consists of a single script:
 
     **For Zsh (`~/.zshrc`):**
     ```zsh
-    # --- Miniplexer Tab Status ---
-    _update_miniplexer_status() {
-      typeset -g MINIPLEXER_STATUS
-      if [ -f "$HOME/.miniplexer_session.json" ]; then
-        MINIPLEXER_STATUS=$(jq -r '.status' "$HOME/.miniplexer_session.json")
+    # --- Tabplexer Tab Status ---
+    _update_tabplexer_status() {
+      typeset -g TABPLEXER_STATUS
+      if [ -f "$HOME/.tabplexer_session.json" ]; then
+        TABPLEXER_STATUS=$(jq -r '.status' "$HOME/.tabplexer_session.json")
       else
-        MINIPLEXER_STATUS=""
+        TABPLEXER_STATUS=""
       fi
     }
     autoload -U add-zsh-hook
-    add-zsh-hook precmd _update_miniplexer_status
-    _update_miniplexer_status
-    # --- End Miniplexer Tab Status ---
+    add-zsh-hook precmd _update_tabplexer_status
+    _update_tabplexer_status
+    # --- End Tabplexer Tab Status ---
     ```
-    You can then add `${MINIPLEXER_STATUS}` to your `PROMPT` variable. For example:
-    `PROMPT='${MINIPLEXER_STATUS} %n@%m:%~%# '`
+    You can then add `${TABPLEXER_STATUS}` to your `PROMPT` variable. For example:
+    `PROMPT='${TABPLEXER_STATUS} %n@%m:%~%# '`
 
 
     **For Bash (`~/.bashrc`):**
     ```bash
-    # --- Miniplexer Tab Status ---
-    _set_miniplexer_prompt() {
-      local MINIPLEXER_STATUS=""
-      if [ -f "$HOME/.miniplexer_session.json" ]; then
-        MINIPLEXER_STATUS=$(jq -r '.status' "$HOME/.miniplexer_session.json")
+    # --- Tabplexer Tab Status ---
+    _set_tabplexer_prompt() {
+      local TABPLEXER_STATUS=""
+      if [ -f "$HOME/.tabplexer_session.json" ]; then
+        TABPLEXER_STATUS=$(jq -r '.status' "$HOME/.tabplexer_session.json")
       fi
-      PS1="\[\033[36m\]${MINIPLEXER_STATUS}\[\033[0m\] ${ORIGINAL_PS1}"
+      PS1="\[\033[36m\]${TABPLEXER_STATUS}\[\033[0m\] ${ORIGINAL_PS1}"
     }
     if [ -z "${ORIGINAL_PS1+x}" ]; then
       ORIGINAL_PS1=$PS1
     fi
-    if [[ ! "$PROMPT_COMMAND" =~ _set_miniplexer_prompt ]]; then
-      PROMPT_COMMAND="_set_miniplexer_prompt;${PROMPT_COMMAND}"
+    if [[ ! "$PROMPT_COMMAND" =~ _set_tabplexer_prompt ]]; then
+      PROMPT_COMMAND="_set_tabplexer_prompt;${PROMPT_COMMAND}"
     fi
-    # --- End Miniplexer Tab Status ---
+    # --- End Tabplexer Tab Status ---
     ```
 
 ## Usage
