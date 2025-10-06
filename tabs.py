@@ -2,33 +2,131 @@
 import os
 import sys
 import json
+import shutil
 import subprocess
 import time
 from pathlib import Path
 
-SESSION_FILE = Path.home() / ".miniplexer_session.json"
-WM_CLASS = "miniplexer_tab"
-LOG_FILE = Path.home() / ".miniplexer.log"
+SESSION_FILE = Path.home() / ".tabplexer_session.json"
+WM_CLASS = "tabplexer_tab"
+LOG_FILE = Path.home() / ".tabplexer.log"
+
+
+def _empty_session():
+    """Return a blank session structure."""
+    return {"windows": [], "active": None, "status": ""}
+
+
+def _format_status(windows, active):
+    """Return a `[current/total]` style status string for the prompt."""
+    if not windows:
+        return ""
+
+    try:
+        current_index = windows.index(active)
+    except ValueError:
+        current_index = 0
+
+    return f"[{current_index + 1}/{len(windows)}]"
+
+
+def _normalize_session(data, available_windows=None):
+    """Sanitize session data, dropping stale windows and fixing the status."""
+    session = _empty_session()
+
+    windows = []
+    seen = set()
+    desired_windows = data.get("windows") or []
+    for window_id in desired_windows:
+        try:
+            w_id = int(window_id)
+        except (TypeError, ValueError):
+            continue
+
+        if available_windows is not None and w_id not in available_windows:
+            continue
+
+        if w_id in seen:
+            continue
+
+        seen.add(w_id)
+        windows.append(w_id)
+
+    session["windows"] = windows
+
+    active = data.get("active")
+    try:
+        active = int(active) if active is not None else None
+    except (TypeError, ValueError):
+        active = None
+
+    if windows:
+        if active not in windows:
+            active = windows[0]
+
+        session["active"] = active
+        session["status"] = _format_status(windows, active)
+
+    return session
+
+COMMAND_DEPENDENCIES = {
+    "start": {"alacritty", "xdotool"},
+    "new": {"alacritty", "xdotool"},
+    "next": {"xdotool"},
+    "prev": {"xdotool"},
+    "end": {"xdotool"},
+}
+
+
+def missing_dependencies(required_commands):
+    """Return a sorted list of missing external commands."""
+    missing = []
+    for command in sorted(required_commands):
+        if shutil.which(command) is None:
+            missing.append(command)
+    return missing
+
+
+def ensure_dependencies(command):
+    """Validate that all required external commands exist for the given action."""
+    required = COMMAND_DEPENDENCIES.get(command, set())
+    missing = missing_dependencies(required)
+    if missing:
+        deps = ", ".join(missing)
+        print(
+            "Cannot continue because the following dependencies are missing: "
+            f"{deps}."
+        )
+        print("Please install them and try again.")
+        sys.exit(1)
 
 def log_message(message):
     """Appends a message to the log file."""
     with open(LOG_FILE, "a") as f:
         f.write(f"[{time.time()}] {message}\n")
 
-def read_session():
-    """Reads the session file and returns the data."""
+def read_session(available_windows=None):
+    """Reads the session file, pruning stale windows along the way."""
+    if available_windows is None:
+        available_windows = set(find_windows())
+
     if not SESSION_FILE.exists():
-        return {"windows": [], "active": None}
+        return _normalize_session(_empty_session(), available_windows)
+
     with open(SESSION_FILE, "r") as f:
         try:
-            return json.load(f)
+            raw_session = json.load(f)
         except json.JSONDecodeError:
-            return {"windows": [], "active": None}
+            raw_session = _empty_session()
+
+    return _normalize_session(raw_session, available_windows)
 
 def write_session(data):
     """Writes the given data to the session file."""
+    session = _normalize_session(data)
     with open(SESSION_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+        json.dump(session, f, indent=2)
+    return session
 
 
 
@@ -81,7 +179,8 @@ def handle_start():
 def handle_new():
     """Creates a new tab."""
     log_message("--- handle_new called ---")
-    session = read_session()
+    windows_before = set(find_windows())
+    session = read_session(windows_before)
     log_message(f"Initial session: {session}")
 
     if not session.get("windows"):
@@ -90,7 +189,6 @@ def handle_new():
         return
 
     active_window = session.get("active")
-    windows_before = set(find_windows())
     log_message(f"Windows before launch: {windows_before}")
 
     log_message("Launching new terminal...")
@@ -118,8 +216,8 @@ def handle_new():
 
     session["windows"].append(new_window)
     session["active"] = new_window
+    session = write_session(session)
     log_message(f"Writing new session: {session}")
-    write_session(session)
     log_message("--- handle_new finished ---")
     print(f"New tab created with window {new_window}")
 
@@ -167,6 +265,7 @@ def handle_prev():
     new_active = windows[prev_idx]
     _switch_to_window(active, new_active)
 
+    session["active"] = new_active
     write_session(session)
 
 def handle_end():
@@ -184,10 +283,10 @@ def main():
     """Main entry point."""
     if len(sys.argv) == 1:
         # If no command, default to starting a session
-        handle_start()
-        return
+        command = "start"
+    else:
+        command = sys.argv[1]
 
-    command = sys.argv[1]
     commands = {
         "start": handle_start,
         "new": handle_new,
@@ -197,6 +296,7 @@ def main():
     }
 
     if command in commands:
+        ensure_dependencies(command)
         commands[command]()
     else:
         print(f"Unknown command: {command}")
