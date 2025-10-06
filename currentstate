@@ -1,0 +1,10 @@
+the previous tab i have to hit next and then previous. so like this:                                │
+│   1<1<1>1<0<0<0<0>0<1<1<1>1<1. if that makes sense. next works fine: 1>0>1>0>1>0>1.Unless I           │
+│   start going to next from the stuck previous: 0>0>1>0>1>0>1>0.  The bigger issue, and possibly       │
+│   tied to this one, is introducing another/more tabs. creat a new tab and if you start with next      │
+│   its fine: 2>0>1>2>0>1>2>0>1>2 if you go previous you still get stuck: 0<2<2<2<2<2<2. The next       │
+│   thing you would think to do to get it to unstick is go 2>2<0<0<0<0. instead as soon as you go       │
+│   > from the stuck state the next tab in line opens in it's own window. With both windows upen        │
+│   you can do the ><>< trick. when you do that both windows will swap tabs. Original windows is        │
+│   on 2 new windows is at 0. if you hit > nothing. hit >< its swaps both. New window becomes 0         │
+│   old windows becomes 2.  
