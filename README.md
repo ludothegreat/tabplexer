@@ -69,7 +69,7 @@ This project consists of a single script:
     ```zsh
     # --- Tabplexer Tab Status ---
     _update_tabplexer_status() {
-      typeset -g TABPLEXER_STATUS
+      typeset -gx TABPLEXER_STATUS
       if [ -f "$HOME/.tabplexer_session.json" ]; then
         TABPLEXER_STATUS=$(jq -r '.status' "$HOME/.tabplexer_session.json")
       else
@@ -81,8 +81,25 @@ This project consists of a single script:
     _update_tabplexer_status
     # --- End Tabplexer Tab Status ---
     ```
-    You can then add `${TABPLEXER_STATUS}` to your `PROMPT` variable. For example:
-    `PROMPT='${TABPLEXER_STATUS} %n@%m:%~%# '`
+
+    *   **Using the stock Zsh prompt:** If you are not managing a custom prompt, append the status to the built-in prompt by updating `PROMPT` right after the snippet above:
+
+        ```zsh
+        PROMPT='${TABPLEXER_STATUS} '$PROMPT
+        ```
+
+        This keeps your default prompt intact while prefixing the active tab indicator.
+
+    *   **Using third-party prompts (Starship, Oh My Zsh themes, Pimp my Prompt, etc.):** Leave the `PROMPT` assignment to your theme, but expose the `TABPLEXER_STATUS` environment variable so your prompt manager can render it. For example, with Starship add this to `~/.config/starship.toml`:
+
+        ```toml
+        [custom.tabplexer]
+        command = 'echo -n ${TABPLEXER_STATUS}'
+        when = 'test -n "${TABPLEXER_STATUS}"'
+        format = '[$output ](bold cyan)'
+        ```
+
+        Then include `"$TABPLEXER_STATUS"` (or the custom module) wherever your prompt framework allows.
 
 
     **For Bash (`~/.bashrc`):**
@@ -93,6 +110,7 @@ This project consists of a single script:
       if [ -f "$HOME/.tabplexer_session.json" ]; then
         TABPLEXER_STATUS=$(jq -r '.status' "$HOME/.tabplexer_session.json")
       fi
+      export TABPLEXER_STATUS
       PS1="\[\033[36m\]${TABPLEXER_STATUS}\[\033[0m\] ${ORIGINAL_PS1}"
     }
     if [ -z "${ORIGINAL_PS1+x}" ]; then
@@ -103,6 +121,10 @@ This project consists of a single script:
     fi
     # --- End Tabplexer Tab Status ---
     ```
+
+    *   **Using the default Bash prompt:** The snippet above saves your original prompt the first time it runs and prefixes it with the Tabplexer status, so no additional changes are required.
+
+    *   **Using third-party Bash prompts (Starship, Liquid Prompt, etc.):** Keep the function so `TABPLEXER_STATUS` is refreshed, but let your prompt framework handle `PS1`. For Starship, for example, add the custom module shown in the Zsh section and reference it from your theme configuration.
 
 ## Usage
 
