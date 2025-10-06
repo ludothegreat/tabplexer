@@ -11,6 +11,11 @@ Ensure the following software is installed on your system:
 *   **xdotool:** A command-line tool for window manipulation.
 *   **jq:** A command-line JSON processor for reading the session status.
 
+> [!NOTE]
+> The script validates that the required commands are available before it runs any
+> action. If something is missing you will see a descriptive error with the list
+> of dependencies that need to be installed.
+
 You can typically install `xdotool` and `jq` using your system's package manager:
 ```bash
 # For Debian/Ubuntu
@@ -64,6 +69,7 @@ This project consists of a single script:
     ```zsh
     # --- Miniplexer Tab Status ---
     _update_miniplexer_status() {
+      typeset -g MINIPLEXER_STATUS
       if [ -f "$HOME/.miniplexer_session.json" ]; then
         MINIPLEXER_STATUS=$(jq -r '.status' "$HOME/.miniplexer_session.json")
       else
@@ -72,6 +78,7 @@ This project consists of a single script:
     }
     autoload -U add-zsh-hook
     add-zsh-hook precmd _update_miniplexer_status
+    _update_miniplexer_status
     # --- End Miniplexer Tab Status ---
     ```
     You can then add `${MINIPLEXER_STATUS}` to your `PROMPT` variable. For example:
@@ -103,3 +110,8 @@ This project consists of a single script:
 *   **New Tab:** Use `Ctrl+Shift+T`.
 *   **Switch Tabs:** Use `Ctrl+Shift+Left` and `Ctrl+Shift+Right`.
 *   **End a session:** Run `/path/to/your/tabs.py end`. This will close all windows associated with the session.
+
+The session file keeps track of the active window and also stores a `[current/total]`
+status string under the `status` key. This value is refreshed automatically
+whenever you create, close, or switch between tabs, so your shell prompt remains
+accurate even after manually closing windows.
